@@ -1,1 +1,1 @@
-{ Filter = { Executables = ( "WeChat" ); Bundles = ( "com.tencent.xin" ); }; }
+{ Filter = { Executables = ( "WeChat" ); Bundles = ( "com.tencent.xin", "com.tencent.qy.xin" ); }; }
