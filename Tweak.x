@@ -17,7 +17,8 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
-    if (![self isKindOfClass:[UIViewController class]]) return;
+    // Logos 只给 MoreViewController 生成了前向声明，不能直接给 self 发消息，
+    // 先转成 UIViewController 再用。
     UIViewController *vc = (UIViewController *)self;
     UINavigationItem *item = vc.navigationItem;
     if (item == nil) return;
