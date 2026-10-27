@@ -1,7 +1,7 @@
 Package: com.youyou.wcplugins
 Name: 微信插件管理（重写版）
 Description: 微信插件收纳：把各个插件收进一个列表页，可开关、可进插件页面。布局集中在 WCPluginsLayout.h 里改。
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm64
 Author: youyou
 Maintainer: youyou

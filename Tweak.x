@@ -18,7 +18,8 @@
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     // Logos 只给 MoreViewController 生成了前向声明，不能直接给 self 发消息，
-    // 先转成 UIViewController 再用。
+    // 先确认它是 UIViewController 再转，避免新版微信里这个类变了之后硬转崩溃。
+    if (![(id)self isKindOfClass:[UIViewController class]]) return;
     UIViewController *vc = (UIViewController *)self;
     UINavigationItem *item = vc.navigationItem;
     if (item == nil) return;

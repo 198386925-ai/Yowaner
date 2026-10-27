@@ -34,15 +34,25 @@
 }
 
 - (void)reloadSnapshot {
+    // 注册可能发生在任意线程，UIKit 刷新必须回主线程，否则必崩。
+    NSArray<WCPluginModel *> *copy = nil;
     @synchronized([WCPluginsMgr sharedMgr].plugins) {
-        self.snapshot = [[WCPluginsMgr sharedMgr].plugins copy];
+        copy = [[WCPluginsMgr sharedMgr].plugins copy];
     }
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.snapshot = copy;
+            [self.tableView reloadData];
+        });
+        return;
+    }
+    self.snapshot = copy;
     [self.tableView reloadData];
 }
 
 #pragma mark - 页头
 
-- (UIView *)tableViewHeaderView {
+- (UIView *)wcpluginsHeaderView {
     UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, WCPluginsHeaderHeight)];
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectInset(header.bounds, WCPluginsCellHorizontalInset, 0)];
     label.text = @"微信插件管理";
@@ -56,7 +66,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     // InsetGrouped 下用一个自定义页头；Plain 样式下系统自带区头就够了。
     if (WCPluginsTableViewStyle == UITableViewStyleInsetGrouped) {
-        return [self tableViewHeaderView];
+        return [self wcpluginsHeaderView];
     }
     return nil;
 }
@@ -90,6 +100,11 @@
     cell.detailTextLabel.font = WCPluginsVersionFont();
     cell.detailTextLabel.textColor = WCPluginsVersionColor();
 
+    // 快照可能在刷新间隙变化，越界直接给空行，绝不崩。
+    if (indexPath.row < 0 || indexPath.row >= self.snapshot.count) {
+        cell.textLabel.text = nil;
+        return cell;
+    }
     WCPluginModel *model = self.snapshot[indexPath.row];
     cell.textLabel.text = model.title;
 
@@ -113,6 +128,7 @@
 }
 
 - (void)switchChanged:(UISwitch *)sender {
+    if (sender.tag < 0 || sender.tag >= self.snapshot.count) return;
     WCPluginModel *model = self.snapshot[sender.tag];
     if (model.key.length == 0) return;
     [[WCPluginsMgr sharedMgr] setSwitchValue:sender.isOn forKey:model.key];
@@ -120,6 +136,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (indexPath.row < 0 || indexPath.row >= self.snapshot.count) return;
     WCPluginModel *model = self.snapshot[indexPath.row];
     if (model.isController && model.controller != nil) {
         model.controller.hidesBottomBarWhenPushed = YES;
